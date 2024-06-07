@@ -14,7 +14,7 @@ video_resolution = (1000, 800)  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
 vid_fps = 60  # Video frames per second
 zoom_value = 1.0  # Zoom value
-output_folder = "videos"  # Folder to save videos
+output_folder = "/mnt/usbdrive/Recordings"  # Folder to save videos
 
 # Create output folder if it doesn't exist
 os.makedirs(output_folder, exist_ok=True)
