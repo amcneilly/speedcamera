@@ -8,7 +8,7 @@ from tflite_runtime.interpreter import Interpreter
 model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
 labels_path = "coco_labels.txt"  # Update with your labels file path
 desired_object = "car"  # Object to detect
-recording_duration = 30  # Recording duration in seconds
+recording_duration = 10  # Recording duration in seconds
 
 # Load labels
 with open(labels_path, 'r') as f:
@@ -28,7 +28,7 @@ picam2.configure(config)
 picam2.start()
 
 def detect_objects(frame):
-    input_data = cv2.resize(frame, (300, 300))
+    input_data = cv2.resize(frame, (800, 600))
     input_data = np.expand_dims(input_data, axis=0)  # Add batch dimension
     input_data = np.uint8(input_data)  # Convert input data to uint8
     
