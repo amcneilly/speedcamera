@@ -8,6 +8,7 @@ from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FfmpegOutput
 from tflite_runtime.interpreter import Interpreter
+from datetime import datetime
 
 # Load the TFLite model and allocate tensors.
 def load_model(model_path):
@@ -91,14 +92,22 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 # Function to run detection in a separate thread
-def detection_thread(interpreter, picam2, target_label, labels):
+def detection_thread(interpreter, picam2, target_label, labels, clip_duration):
+    recording = False
+
     while True:
         frame = picam2.capture_array()
         if detect_objects(interpreter, frame, target_label, labels):
-            print(f"{target_label.capitalize()} detected! Saving 30-second clip.")
-            picam2.stop_recording()
-            time.sleep(30)  # Wait for 30 seconds
-            picam2.start_recording(encoder, output=video_output)
+            if not recording:
+                recording = True
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                video_filename = f"video_{timestamp}.mp4"
+                print(f"{target_label.capitalize()} detected! Saving {clip_duration}-second clip to {video_filename}.")
+                video_output = FfmpegOutput(video_filename)
+                picam2.start_recording(encoder, output=video_output)
+                time.sleep(clip_duration)  # Record for the duration
+                picam2.stop_recording()
+                recording = False
 
 # Main function
 def main(detection_time_interval, target_label, clip_duration):
@@ -108,9 +117,8 @@ def main(detection_time_interval, target_label, clip_duration):
     
     interpreter = load_model(model_path)
 
-    global encoder, video_output  # Make these variables global for access in the detection thread
+    global encoder  # Make this variable global for access in the detection thread
     encoder = H264Encoder(10000000)
-    video_output = FfmpegOutput("video.mp4")
 
     picam2 = Picamera2()
     preview = Preview.QT
@@ -120,21 +128,15 @@ def main(detection_time_interval, target_label, clip_duration):
     signal.signal(signal.SIGTERM, signal_handler)
 
     picam2.start_preview(preview)
-    picam2.start_recording(encoder, output=video_output)
 
     # Start the detection thread
-    thread = threading.Thread(target=detection_thread, args=(interpreter, picam2, target_label, labels))
+    thread = threading.Thread(target=detection_thread, args=(interpreter, picam2, target_label, labels, clip_duration))
     thread.start()
 
-    # Main loop for saving video clips every 'clip_duration' seconds
-    start_time = time.time()
+    # Main loop to keep the script running
     try:
         while True:
-            if time.time() - start_time >= clip_duration:
-                print(f"Saving next {clip_duration}-second clip.")
-                picam2.stop_recording()
-                picam2.start_recording(encoder, output=video_output)
-                start_time = time.time()
+            time.sleep(1)  # Keep the main thread alive
     except KeyboardInterrupt:
         print('Interrupted! Exiting...')
     finally:
