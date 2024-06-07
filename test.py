@@ -95,7 +95,7 @@ while True:
         print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         recording = True
         recording_end_time = time.time() + recording_duration
-        filename = time.strftime("%Y%m%d_%H%M%S") + ".avi"
+        filename = 'videos/' + time.strftime("%Y%m%d_%H%M%S") + ".avi"
         video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), 20, video_resolution)
         microcontroller_on_recording_start()
 
