@@ -150,4 +150,5 @@ if __name__ == '__main__':
     detection_time_interval = 10  # Set the detection time interval in seconds
     target_label = "car"  # Set the target object label
     clip_duration = 30  # Set the clip duration in seconds
+
     main(detection_time_interval, target_label, clip_duration)
