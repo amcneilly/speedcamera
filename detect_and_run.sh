@@ -9,7 +9,7 @@ run_detection() {
     OUTPUT_FILE="detect_results.txt"
 
     # Run rpicam-detect with specified object type
-    rpicam-detect -t 0 -o $OUTPUT_PATTERN --lores-width 400 --lores-height 300 --post-process-file object_detect_tf.json --object $OBJECT_TYPE > $OUTPUT_FILE
+    rpicam-detect -t 0 -o $OUTPUT_PATTERN --lores-width 400 --lores-height 300 --post-process-file test_classify_tf.json --object $OBJECT_TYPE > $OUTPUT_FILE
 
     # Check if the output file exists
     if [ ! -f $OUTPUT_FILE ]; then
