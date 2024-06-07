@@ -8,6 +8,7 @@ from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FfmpegOutput
 from tflite_runtime.interpreter import Interpreter
+from datetime import datetime
 
 # Load the TFLite model and allocate tensors.
 def load_model(model_path):
@@ -23,7 +24,7 @@ def load_labels(labels_path):
 
 # Get label index based on the desired label (e.g., "car" or "person")
 def get_label_index(labels, target_label):
-    if target_label in labels:
+    if target_label in labels,:
         return labels.index(target_label)
     else:
         raise ValueError(f"Label '{target_label}' not found in labels list.")
@@ -96,9 +97,10 @@ def detection_thread(interpreter, picam2, target_label, labels):
         frame = picam2.capture_array()
         if detect_objects(interpreter, frame, target_label, labels):
             print(f"{target_label.capitalize()} detected! Saving 60-second clip.")
-            picam2.stop_recording()
-            time.sleep(60)  # Wait for 60 seconds
+            video_output = FfmpegOutput(f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
             picam2.start_recording(encoder, output=video_output)
+            time.sleep(60)  # Wait for 60 seconds
+            picam2.stop_recording()
 
 # Main function
 def main():
@@ -109,9 +111,8 @@ def main():
     
     interpreter = load_model(model_path)
 
-    global encoder, video_output  # Make these variables global for access in the detection thread
+    global encoder  # Make encoder global for access in the detection thread
     encoder = H264Encoder(10000000)
-    video_output = FfmpegOutput("video.mp4")
 
     picam2 = Picamera2()
     preview = Preview.QT
@@ -121,20 +122,21 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     picam2.start_preview(preview)
-    picam2.start_recording(encoder, output=video_output)
 
     # Start the detection thread
     thread = threading.Thread(target=detection_thread, args=(interpreter, picam2, target_label, labels))
     thread.start()
 
-    # Main loop for saving video clips every 60 seconds
+    # Main loop for saving video clips every 20 seconds
     start_time = time.time()
     try:
         while True:
-            if time.time() - start_time >= 60:
-                print("Saving next 60-second clip.")
-                picam2.stop_recording()
+            if time.time() - start_time >= 20:
+                print("Saving next 20-second clip.")
+                video_output = FfmpegOutput(f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
                 picam2.start_recording(encoder, output=video_output)
+                time.sleep(20)
+                picam2.stop_recording()
                 start_time = time.time()
     except KeyboardInterrupt:
         print('Interrupted! Exiting...')
