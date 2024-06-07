@@ -29,7 +29,6 @@ picam2.start()
 
 def detect_objects(frame):
     input_data = cv2.resize(frame, (300, 300))
-    input_data = np.expand_dims(input_data, axis=0)
     input_data = np.uint8(input_data)  # Convert input data to uint8
     
     interpreter.set_tensor(input_details[0]['index'], input_data)
@@ -65,7 +64,8 @@ recording_end_time = 0
 
 while True:
     frame = picam2.capture_array()
-    boxes, classes, scores = detect_objects(frame)
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB
+    boxes, classes, scores = detect_objects(frame_rgb)
     frame = draw_boxes(frame, boxes, classes, scores)
     
     cv2.imshow("Object Detection", frame)
