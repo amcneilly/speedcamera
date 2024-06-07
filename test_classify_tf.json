@@ -1,0 +1,14 @@
+{
+    "object_detect_tf" : {
+        "top_n_results" : 2,
+        "refresh_rate" : 20,
+        "threshold_high" : 0.5,
+        "model_file" : "./ssd_mobilenet_v1_coco_quant_postprocess.tflite",
+        "labels_file" : "./coco_labels.txt",
+        "display_labels" : 1,
+	"verbose" : 1
+    },
+     "object_detect_draw_cv" : {
+       "line_thickness" : 2
+    }
+}
