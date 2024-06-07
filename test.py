@@ -76,7 +76,7 @@ def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
 
 def add_timestamp(frame):
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-    cv2.putText(frame, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(frame, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
     return frame
 
 def microcontroller_on_detection():
@@ -119,7 +119,7 @@ while True:
         recording = True
         recording_end_time = time.time() + recording_duration
         filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".avi")
-        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
+        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), 20, video_resolution)
         microcontroller_on_recording_start()
 
     cv2.imshow("Object Detection", frame_bgr)
