@@ -2,19 +2,29 @@ import cv2
 import time
 import numpy as np
 import os
+import argparse
 from picamera2 import Picamera2
 from tflite_runtime.interpreter import Interpreter
+
+# Argument parser setup
+parser = argparse.ArgumentParser(description='Object detection and recording script.')
+parser.add_argument('--desired_object', type=str, default='car', help='Object to detect')
+parser.add_argument('--recording_duration', type=int, default=15, help='Recording duration in seconds')
+parser.add_argument('--video_resolution', type=str, default='800x600', help='Desired video resolution (widthxheight)')
+parser.add_argument('--output_folder', type=str, default='recordings', help='Folder to save videos')
+
+args = parser.parse_args()
 
 # Configuration
 model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
 labels_path = "coco_labels.txt"  # Update with your labels file path
-desired_object = "car"  # Object to detect
-recording_duration = 30  # Recording duration in seconds
-video_resolution = (1000, 800)  # Desired video resolution (width, height)
+desired_object = args.desired_object  # Object to detect
+recording_duration = args.recording_duration  # Recording duration in seconds
+video_resolution = tuple(map(int, args.video_resolution.split('x')))  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
 vid_fps = 60  # Video frames per second
 zoom_value = 1.0  # Zoom value
-output_folder = "/mnt/usbdrive/Recordings"  # Folder to save videos
+output_folder = args.output_folder  # Folder to save videos
 
 # Create output folder if it doesn't exist
 os.makedirs(output_folder, exist_ok=True)
@@ -119,7 +129,7 @@ while True:
         recording = True
         recording_end_time = time.time() + recording_duration
         filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".avi")
-        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), 20, video_resolution)
+        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
         microcontroller_on_recording_start()
 
     cv2.imshow("Object Detection", frame_bgr)
