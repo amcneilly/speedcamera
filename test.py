@@ -8,8 +8,8 @@ from tflite_runtime.interpreter import Interpreter
 model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
 labels_path = "coco_labels.txt"  # Update with your labels file path
 desired_object = "car"  # Object to detect
-recording_duration = 30  # Recording duration in seconds
-video_resolution = (1920, 1080)  # Desired video resolution (width, height)
+recording_duration = 10  # Recording duration in seconds
+video_resolution = (800, 800)  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
 
 # Load labels
