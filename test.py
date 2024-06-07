@@ -1,6 +1,7 @@
 import cv2
 import time
 import numpy as np
+import os
 from picamera2 import Picamera2
 from tflite_runtime.interpreter import Interpreter
 
@@ -9,8 +10,14 @@ model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with you
 labels_path = "coco_labels.txt"  # Update with your labels file path
 desired_object = "car"  # Object to detect
 recording_duration = 30  # Recording duration in seconds
-video_resolution = (800, 400)  # Desired video resolution (width, height)
+video_resolution = (1920, 1080)  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
+vid_fps = 20  # Video frames per second
+zoom_value = 1.0  # Zoom value
+output_folder = "videos"  # Folder to save videos
+
+# Create output folder if it doesn't exist
+os.makedirs(output_folder, exist_ok=True)
 
 # Load labels
 with open(labels_path, 'r') as f:
@@ -28,6 +35,9 @@ picam2 = Picamera2()
 config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
 picam2.start()
+
+# Apply zoom
+picam2.set_controls({"Zoom": zoom_value})
 
 def detect_objects(frame):
     input_data = cv2.resize(frame, model_input_size)  # Resize to model input size
@@ -95,8 +105,8 @@ while True:
         print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         recording = True
         recording_end_time = time.time() + recording_duration
-        filename = 'videos/' + time.strftime("%Y%m%d_%H%M%S") + ".avi"
-        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), 20, video_resolution)
+        filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".avi")
+        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
         microcontroller_on_recording_start()
 
     if recording:
