@@ -29,6 +29,7 @@ picam2.start()
 
 def detect_objects(frame):
     input_data = cv2.resize(frame, (300, 300))
+    input_data = np.expand_dims(input_data, axis=0)  # Add batch dimension
     input_data = np.uint8(input_data)  # Convert input data to uint8
     
     interpreter.set_tensor(input_details[0]['index'], input_data)
