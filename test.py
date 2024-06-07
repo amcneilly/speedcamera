@@ -10,7 +10,7 @@ model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with you
 labels_path = "coco_labels.txt"  # Update with your labels file path
 desired_object = "car"  # Object to detect
 recording_duration = 30  # Recording duration in seconds
-video_resolution = (1920, 1080)  # Desired video resolution (width, height)
+video_resolution = (800, 600)  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
 vid_fps = 20  # Video frames per second
 zoom_value = 1.0  # Zoom value
@@ -74,6 +74,11 @@ def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
     
     return frame, detection_made
 
+def add_timestamp(frame):
+    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+    cv2.putText(frame, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    return frame
+
 def microcontroller_on_detection():
     print("Microcontroller: Object detected")
 
@@ -99,7 +104,15 @@ while True:
         microcontroller_on_detection()
         detection_flag = True  # Set the flag to indicate detection
 
-    cv2.imshow("Object Detection", frame_bgr)
+    if recording:
+        frame_bgr = add_timestamp(frame_bgr)  # Add timestamp to frame
+        video_writer.write(frame_bgr)
+        if time.time() > recording_end_time:
+            print(f"Recording ended at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+            recording = False
+            video_writer.release()
+            microcontroller_on_recording_end()
+            detection_flag = False  # Reset the flag after recording ends
     
     if not recording and detection_flag:
         print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -109,14 +122,7 @@ while True:
         video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
         microcontroller_on_recording_start()
 
-    if recording:
-        video_writer.write(frame_bgr)
-        if time.time() > recording_end_time:
-            print(f"Recording ended at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-            recording = False
-            video_writer.release()
-            microcontroller_on_recording_end()
-            detection_flag = False  # Reset the flag after recording ends
+    cv2.imshow("Object Detection", frame_bgr)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
