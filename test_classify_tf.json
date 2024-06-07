@@ -3,7 +3,7 @@
         "top_n_results" : 2,
         "refresh_rate" : 20,
         "threshold_high" : 0.5,
-        "model_file" : "./ssd_mobilenet_v1_coco_quant_postprocess.tflite",
+        "model_file" : "./ssd_mobilenet_v1.tflite",
         "labels_file" : "./coco_labels.txt",
         "display_labels" : 1,
 	"verbose" : 1
