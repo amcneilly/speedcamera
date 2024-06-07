@@ -1,3 +1,5 @@
+
+
 import time
 import numpy as np
 import cv2
@@ -8,7 +10,6 @@ from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FfmpegOutput
 from tflite_runtime.interpreter import Interpreter
-from datetime import datetime
 
 # Load the TFLite model and allocate tensors.
 def load_model(model_path):
@@ -92,33 +93,27 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 # Function to run detection in a separate thread
-def detection_thread(interpreter, picam2, target_label, labels, clip_duration):
-    recording = False
-
+def detection_thread(interpreter, picam2, target_label, labels):
     while True:
         frame = picam2.capture_array()
         if detect_objects(interpreter, frame, target_label, labels):
-            if not recording:
-                recording = True
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                video_filename = f"video_{timestamp}.mp4"
-                print(f"{target_label.capitalize()} detected! Saving {clip_duration}-second clip to {video_filename}.")
-                video_output = FfmpegOutput(video_filename)
-                picam2.start_recording(encoder, output=video_output)
-                time.sleep(clip_duration)  # Record for the duration
-                picam2.stop_recording()
-                recording = False
+            print(f"{target_label.capitalize()} detected! Saving 10-second clip.")
+            picam2.stop_recording()
+            time.sleep(10)  # Wait for 10 seconds
+            picam2.start_recording(encoder, output=video_output)
 
 # Main function
-def main(detection_time_interval, target_label, clip_duration):
+def main():
     model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
     labels_path = "coco_labels.txt"  # Update with your labels file path
     labels = load_labels(labels_path)
+    target_label = "car"  # Change this to the desired target label, e.g., "person"
     
     interpreter = load_model(model_path)
 
-    global encoder  # Make this variable global for access in the detection thread
+    global encoder, video_output  # Make these variables global for access in the detection thread
     encoder = H264Encoder(10000000)
+    video_output = FfmpegOutput("video.mp4")
 
     picam2 = Picamera2()
     preview = Preview.QT
@@ -127,18 +122,22 @@ def main(detection_time_interval, target_label, clip_duration):
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # Configure the camera preview
-    picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480)}))
     picam2.start_preview(preview)
+    picam2.start_recording(encoder, output=video_output)
 
     # Start the detection thread
-    thread = threading.Thread(target=detection_thread, args=(interpreter, picam2, target_label, labels, clip_duration))
+    thread = threading.Thread(target=detection_thread, args=(interpreter, picam2, target_label, labels))
     thread.start()
 
-    # Main loop to keep the script running
+    # Main loop for saving video clips every 10 seconds
+    start_time = time.time()
     try:
         while True:
-            time.sleep(1)  # Keep the main thread alive
+            if time.time() - start_time >= 10:
+                print("Saving next 60-second clip.")
+                picam2.stop_recording()
+                picam2.start_recording(encoder, output=video_output)
+                start_time = time.time()
     except KeyboardInterrupt:
         print('Interrupted! Exiting...')
     finally:
@@ -147,7 +146,4 @@ def main(detection_time_interval, target_label, clip_duration):
         sys.exit(0)
 
 if __name__ == '__main__':
-    detection_time_interval = 10  # Set the detection time interval in seconds
-    target_label = "car"  # Set the target object label
-    clip_duration = 30  # Set the clip duration in seconds
-    main(detection_time_interval, target_label, clip_duration)
+    main()
