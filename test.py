@@ -12,7 +12,7 @@ recording_duration = 30  # Recording duration in seconds
 
 # Load labels
 with open(labels_path, 'r') as f:
-    labels = {int(line.split()[0]): line.strip().split(maxsplit=1)[1] for line in f.readlines()}
+    labels = {i: line.strip() for i, line in enumerate(f.readlines())}
 
 # Load TensorFlow Lite model
 interpreter = Interpreter(model_path=model_path)
