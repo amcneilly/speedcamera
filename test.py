@@ -37,7 +37,7 @@ picam2.configure(config)
 picam2.start()
 
 # Apply zoom
-picam2.set_controls({"Zoom": zoom_value})
+#picam2.set_controls({"Zoom": zoom_value})
 
 def detect_objects(frame):
     input_data = cv2.resize(frame, model_input_size)  # Resize to model input size
