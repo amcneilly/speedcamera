@@ -84,8 +84,8 @@ def detect_objects(interpreter, frame, target_label, labels):
 
 # Main function
 def main():
-    model_path = "detect.tflite"  # Update with your model path
-    labels_path = "labels.txt"  # Update with your labels file path
+    model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
+    labels_path = "coco_labels.txt"  # Update with your labels file path
     labels = load_labels(labels_path)
     target_label = "car"  # Change this to the desired target label, e.g., "person"
     
