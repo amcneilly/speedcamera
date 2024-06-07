@@ -1,12 +1,12 @@
 import argparse
 
-def main(arg1, arg2):
+def main(object_type, output_pattern):
     # Your main code here
-    print(f"Argument 1: {arg1}, Argument 2: {arg2}")
+    print(f"Object Type: {object_type}, Output Pattern: {output_pattern}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process some arguments.")
-    parser.add_argument('--arg1', type=str, required=True, help='Argument 1 description')
-    parser.add_argument('--arg2', type=str, required=True, help='Argument 2 description')
+    parser.add_argument('--object', type=str, required=True, help='Type of object detected')
+    parser.add_argument('--output', type=str, required=True, help='Output file pattern')
     args = parser.parse_args()
-    main(args.arg1, args.arg2)
+    main(args.object, args.output)
