@@ -95,17 +95,16 @@ def detection_thread(interpreter, picam2, target_label, labels):
     while True:
         frame = picam2.capture_array()
         if detect_objects(interpreter, frame, target_label, labels):
-            print(f"{target_label.capitalize()} detected! Saving 60-second clip.")
+            print(f"{target_label.capitalize()} detected! Saving 30-second clip.")
             picam2.stop_recording()
-            time.sleep(60)  # Wait for 60 seconds
+            time.sleep(30)  # Wait for 30 seconds
             picam2.start_recording(encoder, output=video_output)
 
 # Main function
-def main():
+def main(detection_time_interval, target_label, clip_duration):
     model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
     labels_path = "coco_labels.txt"  # Update with your labels file path
     labels = load_labels(labels_path)
-    target_label = "car"  # Change this to the desired target label, e.g., "person"
     
     interpreter = load_model(model_path)
 
@@ -127,12 +126,12 @@ def main():
     thread = threading.Thread(target=detection_thread, args=(interpreter, picam2, target_label, labels))
     thread.start()
 
-    # Main loop for saving video clips every 60 seconds
+    # Main loop for saving video clips every 'clip_duration' seconds
     start_time = time.time()
     try:
         while True:
-            if time.time() - start_time >= 60:
-                print("Saving next 60-second clip.")
+            if time.time() - start_time >= clip_duration:
+                print(f"Saving next {clip_duration}-second clip.")
                 picam2.stop_recording()
                 picam2.start_recording(encoder, output=video_output)
                 start_time = time.time()
@@ -144,4 +143,7 @@ def main():
         sys.exit(0)
 
 if __name__ == '__main__':
-    main()
+    detection_time_interval = 10  # Set the detection time interval in seconds
+    target_label = "car"  # Set the target object label
+    clip_duration = 30  # Set the clip duration in seconds
+    main(detection_time_interval, target_label, clip_duration)
