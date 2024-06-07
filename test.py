@@ -28,7 +28,7 @@ picam2.configure(config)
 picam2.start()
 
 def detect_objects(frame):
-    input_data = cv2.resize(frame, (1280, 720))
+    input_data = cv2.resize(frame, (800, 800))
     input_data = np.expand_dims(input_data, axis=0)  # Add batch dimension
     input_data = np.uint8(input_data)  # Convert input data to uint8
     
