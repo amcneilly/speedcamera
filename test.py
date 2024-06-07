@@ -9,7 +9,7 @@ model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with you
 labels_path = "coco_labels.txt"  # Update with your labels file path
 desired_object = "car"  # Object to detect
 recording_duration = 30  # Recording duration in seconds
-video_resolution = (800, 800)  # Desired video resolution (width, height)
+video_resolution = (800, 600)  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
 
 # Load labels
@@ -83,7 +83,7 @@ while True:
     frame, detection_made = draw_boxes(frame, boxes, classes, scores)
     frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
     
-    if detection_made:
+    if detection_made and not recording:
         print(f"Detection made at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         microcontroller_on_detection()
     
