@@ -65,11 +65,12 @@ recording_end_time = 0
 
 while True:
     frame = picam2.capture_array()
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
     boxes, classes, scores = detect_objects(frame_rgb)
     frame = draw_boxes(frame, boxes, classes, scores)
+    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
     
-    cv2.imshow("Object Detection", frame)
+    cv2.imshow("Object Detection", frame_bgr)
     
     if not recording:
         for i in range(len(classes)):
@@ -81,7 +82,7 @@ while True:
                 break
 
     if recording:
-        video_writer.write(frame)
+        video_writer.write(frame_bgr)
         if time.time() > recording_end_time:
             recording = False
             video_writer.release()
