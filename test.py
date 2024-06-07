@@ -127,6 +127,8 @@ def main(detection_time_interval, target_label, clip_duration):
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    # Configure the camera preview
+    picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480)}))
     picam2.start_preview(preview)
 
     # Start the detection thread
