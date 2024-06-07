@@ -7,8 +7,6 @@ from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FfmpegOutput
 from tflite_runtime.interpreter import Interpreter
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QTimer
 
 # Load the TFLite model and allocate tensors.
 def load_model(model_path):
@@ -104,30 +102,18 @@ def main():
     video_output = FfmpegOutput("video.mp4")
 
     picam2 = Picamera2()
-    app = QApplication([])
+    preview = Preview.QT
 
     # Handle signals for clean exit
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    picam2.start_preview(Preview.QT)
+    picam2.start_preview(preview)
 
     # Start recording with the output argument specified
     picam2.start_recording(encoder, output=video_output)
     start_time = time.time()
-
-    def check_window_closed():
-        if not any(widget.isVisible() for widget in app.topLevelWidgets()):
-            print("Preview window closed. Exiting...")
-            picam2.stop_recording()
-            picam2.stop_preview()
-            app.quit()
-            sys.exit(0)
-
-    timer = QTimer()
-    timer.timeout.connect(check_window_closed)
-    timer.start(100)
-
+    
     try:
         while True:
             frame = picam2.capture_array()
