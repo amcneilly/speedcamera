@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import signal
 import sys
+import threading
 from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FfmpegOutput
@@ -89,6 +90,16 @@ def signal_handler(sig, frame):
     print('Exiting...')
     sys.exit(0)
 
+# Function to run detection in a separate thread
+def detection_thread(interpreter, picam2, target_label, labels):
+    while True:
+        frame = picam2.capture_array()
+        if detect_objects(interpreter, frame, target_label, labels):
+            print(f"{target_label.capitalize()} detected! Saving 60-second clip.")
+            picam2.stop_recording()
+            time.sleep(60)  # Wait for 60 seconds
+            picam2.start_recording(encoder, output=video_output)
+
 # Main function
 def main():
     model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
@@ -98,6 +109,7 @@ def main():
     
     interpreter = load_model(model_path)
 
+    global encoder, video_output  # Make these variables global for access in the detection thread
     encoder = H264Encoder(10000000)
     video_output = FfmpegOutput("video.mp4")
 
@@ -109,21 +121,16 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     picam2.start_preview(preview)
-
-    # Start recording with the output argument specified
     picam2.start_recording(encoder, output=video_output)
+
+    # Start the detection thread
+    thread = threading.Thread(target=detection_thread, args=(interpreter, picam2, target_label, labels))
+    thread.start()
+
+    # Main loop for saving video clips every 60 seconds
     start_time = time.time()
-    
     try:
         while True:
-            frame = picam2.capture_array()
-            if detect_objects(interpreter, frame, target_label, labels):
-                print(f"{target_label.capitalize()} detected! Saving 60-second clip.")
-                picam2.stop_recording()
-                time.sleep(60)  # Wait for 60 seconds
-                picam2.start_recording(encoder, output=video_output)
-                start_time = time.time()
-            
             if time.time() - start_time >= 60:
                 print("Saving next 60-second clip.")
                 picam2.stop_recording()
