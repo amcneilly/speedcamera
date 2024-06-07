@@ -8,8 +8,8 @@ from tflite_runtime.interpreter import Interpreter
 model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
 labels_path = "coco_labels.txt"  # Update with your labels file path
 desired_object = "car"  # Object to detect
-recording_duration = 10  # Recording duration in seconds
-video_resolution = (800, 800)  # Desired video resolution (width, height)
+recording_duration = 30  # Recording duration in seconds
+video_resolution = (1920, 1080)  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
 
 # Load labels
@@ -45,11 +45,13 @@ def detect_objects(frame):
 
 def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
     height, width, _ = frame.shape
+    detection_made = False
     for i in range(len(boxes)):
         if scores[i] > threshold:
             class_id = int(classes[i])
             label = labels.get(class_id, "Unknown")
             if label == desired_object:
+                detection_made = True
                 box = boxes[i]
                 ymin, xmin, ymax, xmax = box
                 ymin = int(ymin * height)
@@ -59,8 +61,17 @@ def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
                 
                 cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
                 cv2.putText(frame, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    
+    return frame, detection_made
 
-    return frame
+def microcontroller_on_detection():
+    print("Microcontroller: Object detected")
+
+def microcontroller_on_recording_start():
+    print("Microcontroller: Recording started")
+
+def microcontroller_on_recording_end():
+    print("Microcontroller: Recording ended")
 
 recording = False
 recording_end_time = 0
@@ -69,25 +80,30 @@ while True:
     frame = picam2.capture_array()
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
     boxes, classes, scores = detect_objects(frame_rgb)
-    frame = draw_boxes(frame, boxes, classes, scores)
+    frame, detection_made = draw_boxes(frame, boxes, classes, scores)
     frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
+    
+    if detection_made:
+        print(f"Detection made at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        microcontroller_on_detection()
     
     cv2.imshow("Object Detection", frame_bgr)
     
-    if not recording:
-        for i in range(len(classes)):
-            if labels.get(int(classes[i]), "") == desired_object and scores[i] > 0.5:
-                recording = True
-                recording_end_time = time.time() + recording_duration
-                filename = time.strftime("%Y%m%d_%H%M%S") + ".avi"
-                video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), 20, video_resolution)
-                break
+    if not recording and detection_made:
+        print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        recording = True
+        recording_end_time = time.time() + recording_duration
+        filename = time.strftime("%Y%m%d_%H%M%S") + ".avi"
+        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), 20, video_resolution)
+        microcontroller_on_recording_start()
 
     if recording:
         video_writer.write(frame_bgr)
         if time.time() > recording_end_time:
+            print(f"Recording ended at {time.strftime('%Y-%m-%d %H:%M:%S')}")
             recording = False
             video_writer.release()
+            microcontroller_on_recording_end()
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
