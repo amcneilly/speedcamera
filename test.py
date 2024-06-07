@@ -24,7 +24,7 @@ def load_labels(labels_path):
 
 # Get label index based on the desired label (e.g., "car" or "person")
 def get_label_index(labels, target_label):
-    if target_label in labels,:
+    if target_label in labels:
         return labels.index(target_label)
     else:
         raise ValueError(f"Label '{target_label}' not found in labels list.")
