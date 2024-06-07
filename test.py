@@ -8,7 +8,9 @@ from tflite_runtime.interpreter import Interpreter
 model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
 labels_path = "coco_labels.txt"  # Update with your labels file path
 desired_object = "car"  # Object to detect
-recording_duration = 10  # Recording duration in seconds
+recording_duration = 30  # Recording duration in seconds
+video_resolution = (1920, 1080)  # Desired video resolution (width, height)
+model_input_size = (300, 300)  # Model input size (width, height)
 
 # Load labels
 with open(labels_path, 'r') as f:
@@ -23,12 +25,12 @@ output_details = interpreter.get_output_details()
 
 # Initialize camera
 picam2 = Picamera2()
-config = picam2.create_preview_configuration()
+config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
 picam2.start()
 
 def detect_objects(frame):
-    input_data = cv2.resize(frame, (800, 800))
+    input_data = cv2.resize(frame, model_input_size)  # Resize to model input size
     input_data = np.expand_dims(input_data, axis=0)  # Add batch dimension
     input_data = np.uint8(input_data)  # Convert input data to uint8
     
@@ -78,7 +80,7 @@ while True:
                 recording = True
                 recording_end_time = time.time() + recording_duration
                 filename = time.strftime("%Y%m%d_%H%M%S") + ".avi"
-                video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), 20, (frame.shape[1], frame.shape[0]))
+                video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), 20, video_resolution)
                 break
 
     if recording:
