@@ -4,9 +4,8 @@ import cv2
 import signal
 import sys
 import threading
+import subprocess
 from picamera2 import Picamera2, Preview
-from picamera2.encoders import H264Encoder
-from picamera2.outputs import FfmpegOutput
 from tflite_runtime.interpreter import Interpreter
 from datetime import datetime
 
@@ -96,11 +95,9 @@ def detection_thread(interpreter, picam2, target_label, labels):
     while True:
         frame = picam2.capture_array()
         if detect_objects(interpreter, frame, target_label, labels):
-            print(f"{target_label.capitalize()} detected! Saving 60-second clip.")
-            video_output = FfmpegOutput(f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
-            picam2.start_recording(encoder, output=video_output)
-            time.sleep(60)  # Wait for 60 seconds
-            picam2.stop_recording()
+            print(f"{target_label.capitalize()} detected! Executing script.")
+            subprocess.call(['python3', 'other_script.py'])
+            time.sleep(60)  # Wait for 60 seconds before next detection check
 
 # Main function
 def main():
@@ -110,9 +107,6 @@ def main():
     target_label = "car"  # Change this to the desired target label, e.g., "person"
     
     interpreter = load_model(model_path)
-
-    global encoder  # Make encoder global for access in the detection thread
-    encoder = H264Encoder(10000000)
 
     picam2 = Picamera2()
     preview = Preview.QT
@@ -127,21 +121,12 @@ def main():
     thread = threading.Thread(target=detection_thread, args=(interpreter, picam2, target_label, labels))
     thread.start()
 
-    # Main loop for saving video clips every 20 seconds
-    start_time = time.time()
     try:
         while True:
-            if time.time() - start_time >= 20:
-                print("Saving next 20-second clip.")
-                video_output = FfmpegOutput(f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
-                picam2.start_recording(encoder, output=video_output)
-                time.sleep(20)
-                picam2.stop_recording()
-                start_time = time.time()
+            time.sleep(1)
     except KeyboardInterrupt:
         print('Interrupted! Exiting...')
     finally:
-        picam2.stop_recording()
         picam2.stop_preview()
         sys.exit(0)
 
