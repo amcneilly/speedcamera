@@ -8,9 +8,9 @@ from picamera2 import Picamera2, Preview
 from libcamera import controls
 from tflite_runtime.interpreter import Interpreter
 
-def periodic_autofocus(picam2, interval=5):
+def periodic_autofocus(picam2, interval=4):
     while True:
-        picam2.set_controls({"AfTrigger": 2})
+        picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
         time.sleep(interval)
 
 # Argument parser setup
@@ -58,7 +58,7 @@ picam2.start()
 #set auto focus
 print("Applying autofocus")
 time.sleep(1)
-picam2.set_controls({"AfMode":2})
+picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
 time.sleep(5)
 
 # Start the periodic autofocus thread
