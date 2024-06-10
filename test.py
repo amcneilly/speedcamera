@@ -22,7 +22,7 @@ desired_object = args.desired_object  # Object to detect
 recording_duration = args.recording_duration  # Recording duration in seconds
 video_resolution = tuple(map(int, args.video_resolution.split('x')))  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
-vid_fps = 60  # Video frames per second
+vid_fps = 20  # Video frames per second
 zoom_value = 1.0  # Zoom value
 output_folder = args.output_folder  # Folder to save videos
 
