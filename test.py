@@ -3,7 +3,7 @@ import time
 import numpy as np
 import os
 import argparse
-from picamera2 import Picamera2
+from picamera2 import Picamera2, Preview
 from tflite_runtime.interpreter import Interpreter
 
 # Argument parser setup
