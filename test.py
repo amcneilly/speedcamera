@@ -13,6 +13,24 @@ from tflite_runtime.interpreter import Interpreter
 #         picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
 #         time.sleep(interval)
 
+def calculate_brightness(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    return np.mean(gray)
+    
+def adjust_exposure(picam2, brightness_threshold=50, day_exposure=100000, night_exposure=2000000):
+    while True:
+        frame = picam2.capture_array()
+        brightness = calculate_brightness(frame)
+        if brightness < brightness_threshold:
+            # It's night time
+            print("Nightime expsoure")
+            picam2.set_controls({"ExposureTime": night_exposure})  # Adjust as necessary for night exposure
+        else:
+            # It's day time
+            print("Nightime expsoure")
+            picam2.set_controls({"ExposureTime": day_exposure})  # Adjust as necessary for day exposure
+        time.sleep(5)  # Adjust exposure every 5 seconds
+
 # Argument parser setup
 parser = argparse.ArgumentParser(description='Object detection and recording script.')
 parser.add_argument('--desired_object', type=str, default='car', help='Object to detect')
@@ -55,6 +73,8 @@ config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
 picam2.start()
 
+picam2.set_controls({"ExposureTime": night_exposure})
+
 #set auto focus
 print("Applying autofocus ")
 time.sleep(1)
@@ -66,6 +86,11 @@ time.sleep(5)
 # autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
 # autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
 # autofocus_thread.start()
+
+# Start the exposure adjustment thread
+exposure_thread = threading.Thread(target=adjust_exposure, args=(picam2,))
+exposure_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
+exposure_thread.start()
 
 # Apply zoom
 #picam2.set_controls({"Zoom": zoom_value})
