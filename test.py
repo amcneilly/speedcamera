@@ -8,16 +8,18 @@ from picamera2 import Picamera2, Preview
 from libcamera import controls
 from tflite_runtime.interpreter import Interpreter
 
-# def periodic_autofocus(picam2, interval=4):
-#     while True:
-#         picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
-#         time.sleep(interval)
+def periodic_autofocus(picam2, interval=10):
+    print("adjust exposure")
+    while True:
+        picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
+        time.sleep(interval)
 
 def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
     
-def adjust_exposure(picam2, brightness_threshold=50, day_exposure=100000, night_exposure=20000000):
+def adjust_exposure(picam2, brightness_threshold=60*5, day_exposure=100000, night_exposure=20000000):
+    print("adjust exposure")
     while True:
         frame = picam2.capture_array()
         brightness = calculate_brightness(frame)
@@ -73,22 +75,15 @@ config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
 picam2.start()
 
-#set auto focus
-print("Applying autofocus ")
-time.sleep(1)
-#picam2.set_controls({"AfMode": 2 ,"AfTrigger": 0})
-picam2.set_controls({"AfMode": controls.AfModeEnum.Continuous})
-time.sleep(5)
-
-# Start the periodic autofocus thread
-# autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
-# autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
-# autofocus_thread.start()
-
 # Start the exposure adjustment thread
 exposure_thread = threading.Thread(target=adjust_exposure, args=(picam2,))
 exposure_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
 exposure_thread.start()
+
+# Start the periodic autofocus thread
+autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
+autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
+autofocus_thread.start()
 
 # Apply zoom
 #picam2.set_controls({"Zoom": zoom_value})
