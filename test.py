@@ -4,6 +4,7 @@ import numpy as np
 import os
 import argparse
 from picamera2 import Picamera2, Preview
+from libcamera import controls
 from tflite_runtime.interpreter import Interpreter
 
 # Argument parser setup
@@ -51,7 +52,7 @@ picam2.start()
 #set auto focus
 print("Applying autofocus")
 time.sleep(1)
-picam2.set_controls({"AfMode": 1, "AfTrigger": 0})
+picam2.set_controls({"AfMode":controls.AfModeEnum.Continuous})
 time.sleep(5)
 
 # Apply zoom
