@@ -18,7 +18,7 @@ def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
     
-def adjust_exposure(picam2, brightness_threshold=300, day_exposure=100000, night_exposure=20000000):
+def adjust_exposure(picam2, brightness_threshold=300, day_exposure=100000, night_exposure=2000000):
     print("adjust exposure")
     while True:
         frame = picam2.capture_array()
@@ -31,7 +31,7 @@ def adjust_exposure(picam2, brightness_threshold=300, day_exposure=100000, night
             # It's day time
             print("Nightime expsoure")
             picam2.set_controls({"ExposureTime": day_exposure})  # Adjust as necessary for day exposure
-        time.sleep(5)  # Adjust exposure every 5 seconds
+        time.sleep(300)  # Adjust exposure every 5 seconds
 
 # Argument parser setup
 parser = argparse.ArgumentParser(description='Object detection and recording script.')
