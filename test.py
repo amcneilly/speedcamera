@@ -42,6 +42,8 @@ output_details = interpreter.get_output_details()
 
 # Initialize camera
 picam2 = Picamera2()
+picam2.start_preview(Preview.QTGL)
+print("video_resolution = " + video_resolution)
 config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
 picam2.start()
