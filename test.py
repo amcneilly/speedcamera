@@ -85,7 +85,7 @@ exposure_thread.start()
 # autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
 # autofocus_thread.start()
 time.sleep(1)
-picam2.set_controls({"AfMode": controls.AfModeContinuous ,"AfTrigger": 0})
+picam2.set_controls({"AfMode": 2 ,"AfTrigger": 0})
 time.sleep(5)
 
 # Apply zoom
