@@ -57,7 +57,7 @@ picam2.start()
 
 #set auto focus
 print("Applying autofocus ")
-print ("controls.AfModeEnum.Continuous = " + controls.AfModeEnum.Continuous);
+print ("controls.AfModeEnum.Continuous = " + str(controls.AfModeEnum.Continuous));
 time.sleep(1)
 picam2.set_controls({"AfMode": 2 ,"AfTrigger": 0})
 time.sleep(5)
