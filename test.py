@@ -52,7 +52,7 @@ picam2.start()
 #set auto focus
 print("Applying autofocus")
 time.sleep(1)
-picam2.set_controls({"AfMode":3})
+picam2.set_controls({"AfMode":2})
 time.sleep(5)
 
 # Apply zoom
