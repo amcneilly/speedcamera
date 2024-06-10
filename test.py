@@ -140,7 +140,7 @@ while True:
         video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
         microcontroller_on_recording_start()
 
-    cv2.imshow("Object Detection", frame_bgr)
+    #cv2.imshow("Object Detection", frame_bgr)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
