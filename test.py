@@ -17,7 +17,7 @@ def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
     
-def adjust_exposure(picam2, brightness_threshold=50, day_exposure=100000, night_exposure=2000000):
+def adjust_exposure(picam2, brightness_threshold=50, day_exposure=100000, night_exposure=20000000):
     while True:
         frame = picam2.capture_array()
         brightness = calculate_brightness(frame)
