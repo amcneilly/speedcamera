@@ -8,7 +8,7 @@ from picamera2 import Picamera2, Preview
 from libcamera import controls
 from tflite_runtime.interpreter import Interpreter
 
-def periodic_autofocus(picam2, interval=10):
+def periodic_autofocus(picam2, interval=30):
     print("adjust exposure")
     while True:
         picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
@@ -18,7 +18,7 @@ def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
     
-def adjust_exposure(picam2, brightness_threshold=60*5, day_exposure=100000, night_exposure=20000000):
+def adjust_exposure(picam2, brightness_threshold=300, day_exposure=100000, night_exposure=20000000):
     print("adjust exposure")
     while True:
         frame = picam2.capture_array()
