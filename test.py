@@ -8,11 +8,11 @@ from picamera2 import Picamera2, Preview
 from libcamera import controls
 from tflite_runtime.interpreter import Interpreter
 
-def periodic_autofocus(picam2, interval=30):
-    print("adjust exposure")
-    while True:
-        picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
-        time.sleep(interval)
+# def periodic_autofocus(picam2, interval=30):
+#     print("adjust exposure")
+#     while True:
+#         picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
+#         time.sleep(interval)
 
 def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -81,9 +81,12 @@ exposure_thread.daemon = True  # Daemonize the thread to ensure it exits when th
 exposure_thread.start()
 
 # Start the periodic autofocus thread
-autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
-autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
-autofocus_thread.start()
+# autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
+# autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
+# autofocus_thread.start()
+time.sleep(1)
+picam2.set_controls({"AfMode": 2 ,"AfTrigger": 0})
+time.sleep(5)
 
 # Apply zoom
 #picam2.set_controls({"Zoom": zoom_value})
