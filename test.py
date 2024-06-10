@@ -44,8 +44,13 @@ output_details = interpreter.get_output_details()
 picam2 = Picamera2()
 config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
-picam2.set_controls({"AfMode": 1, "AfTrigger": 0})
 picam2.start()
+
+#set auto focus
+print("Applying autofocus")
+time.sleep(1)
+picam2.set_controls({"AfMode": 2, "AfTrigger": 0})
+time.sleep(5)
 
 # Apply zoom
 #picam2.set_controls({"Zoom": zoom_value})
