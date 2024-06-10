@@ -73,8 +73,6 @@ config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
 picam2.start()
 
-picam2.set_controls({"ExposureTime": night_exposure})
-
 #set auto focus
 print("Applying autofocus ")
 time.sleep(1)
