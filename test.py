@@ -52,7 +52,7 @@ picam2.start()
 #set auto focus
 print("Applying autofocus")
 time.sleep(1)
-picam2.set_controls({"AfMode":controls.AfModeEnum.Continuous})
+picam2.set_controls({"AfMode":3})
 time.sleep(5)
 
 # Apply zoom
