@@ -8,17 +8,17 @@ from picamera2 import Picamera2, Preview
 from libcamera import controls
 from tflite_runtime.interpreter import Interpreter
 
-# def periodic_autofocus(picam2, interval=30):
-#     print("adjust exposure")
-#     while True:
-#         picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
-#         time.sleep(interval)
+def periodic_autofocus(picam2, interval=30):
+    print("adjust exposure")
+    while True:
+        picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
+        time.sleep(interval)
 
 def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
     
-def adjust_exposure(picam2, brightness_threshold=300, day_exposure=100000, night_exposure=2000000):
+def adjust_exposure(picam2, brightness_threshold=30, day_exposure=100000, night_exposure=2000000):
     print("adjust exposure")
     while True:
         frame = picam2.capture_array()
@@ -37,7 +37,7 @@ def adjust_exposure(picam2, brightness_threshold=300, day_exposure=100000, night
 parser = argparse.ArgumentParser(description='Object detection and recording script.')
 parser.add_argument('--desired_object', type=str, default='car', help='Object to detect')
 parser.add_argument('--recording_duration', type=int, default=15, help='Recording duration in seconds')
-parser.add_argument('--video_resolution', type=str, default='800x600', help='Desired video resolution (widthxheight)')
+parser.add_argument('--video_resolution', type=str, default='1024x760', help='Desired video resolution (widthxheight)')
 parser.add_argument('--output_folder', type=str, default='recordings', help='Folder to save videos')
 
 args = parser.parse_args()
@@ -81,12 +81,12 @@ exposure_thread.daemon = True  # Daemonize the thread to ensure it exits when th
 exposure_thread.start()
 
 # Start the periodic autofocus thread
-# autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
-# autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
-# autofocus_thread.start()
-time.sleep(1)
-picam2.set_controls({"AfMode": 2 ,"AfTrigger": 0})
-time.sleep(5)
+autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
+autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
+autofocus_thread.start()
+# time.sleep(1)
+# picam2.set_controls({"AfMode": 2 ,"AfTrigger": 0})
+# time.sleep(5)
 
 # Apply zoom
 #picam2.set_controls({"Zoom": zoom_value})
