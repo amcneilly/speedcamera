@@ -133,12 +133,14 @@ video_writer = None
 
 while True:
     frame = picam2.capture_array()
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
     
     if not recording:
+        #support detection. that triggers recording
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
         boxes, classes, scores = detect_objects(frame_rgb)
         frame, detection_made = draw_boxes(frame, boxes, classes, scores)
-        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
+    
+    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
     
     if detection_made and not recording and not detection_flag:
         print(f"Detection made at {time.strftime('%Y-%m-%d %H:%M:%S')}")
