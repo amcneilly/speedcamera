@@ -135,7 +135,7 @@ while True:
     frame = picam2.capture_array()
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
     
-    if not recording
+    if not recording:
         boxes, classes, scores = detect_objects(frame_rgb)
         frame, detection_made = draw_boxes(frame, boxes, classes, scores)
         frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
