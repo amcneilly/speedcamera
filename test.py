@@ -180,8 +180,8 @@ while True:
         video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, (video_width, video_height))
         microcontroller_on_recording_start()
 
-    # Print the FPS every second
-    if time.time() - start_time >= 1:
+    # Print the FPS 5 seconds
+    if time.time() - start_time >= 5:
         actual_fps = frame_count / (time.time() - start_time)
         print(f"Actual FPS: {actual_fps:.2f}")
         start_time = time.time()
