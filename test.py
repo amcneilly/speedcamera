@@ -76,9 +76,9 @@ picam2.configure(config)
 picam2.start()
 
 # Start the exposure adjustment thread
-exposure_thread = threading.Thread(target=adjust_exposure, args=(picam2,))
-exposure_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
-exposure_thread.start()
+# exposure_thread = threading.Thread(target=adjust_exposure, args=(picam2,))
+# exposure_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
+# exposure_thread.start()
 
 # Start the periodic autofocus thread
 autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
