@@ -128,7 +128,7 @@ def microcontroller_on_recording_end():
 
 def record_video(filename, recording_duration, vid_fps, video_resolution, picam2):
     print(f"Recording started: {filename}")
-    video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
+    video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'H264'), vid_fps, video_resolution)
     start_time = time.time()
     while time.time() - start_time < recording_duration:
         frame = picam2.capture_array()
@@ -157,7 +157,7 @@ while True:
         print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         recording = True
         detection_flag = False
-        filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".avi")
+        filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
         recording_thread = threading.Thread(target=record_video, args=(filename, recording_duration, vid_fps, video_resolution, picam2))
         recording_thread.start()
         microcontroller_on_recording_start()
