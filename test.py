@@ -29,6 +29,7 @@ parser.add_argument('--AFMode', type=int, default=1, help='Auto Focus Mode')
 parser.add_argument('--aftrigger', type=int, default=0, help='Auto Focus Trigger')
 parser.add_argument('--exposure', type=int, help='Set camera exposure time')
 parser.add_argument('--interval', type=int, default=30, help='Interval for periodic autofocus in seconds')
+parser.add_argument('--fps', type=int, default=20, help='Frames per second for video recording')
 
 args = parser.parse_args()
 
@@ -39,7 +40,7 @@ desired_object = args.desired_object  # Object to detect
 recording_duration = args.recording_duration  # Recording duration in seconds
 video_resolution = tuple(map(int, args.video_resolution.split('x')))  # Desired video resolution (width, height)
 model_input_size = (300, 300)  # Model input size (width, height)
-vid_fps = 20  # Video frames per second
+vid_fps = args.fps  # Video frames per second
 zoom_value = 1.0  # Zoom value
 output_folder = args.output_folder  # Folder to save videos
 
@@ -125,6 +126,17 @@ def microcontroller_on_recording_start():
 def microcontroller_on_recording_end():
     print("Microcontroller: Recording ended")
 
+def record_video(filename, recording_duration, vid_fps, video_resolution, picam2):
+    print(f"Recording started: {filename}")
+    video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
+    start_time = time.time()
+    while time.time() - start_time < recording_duration:
+        frame = picam2.capture_array()
+        frame = add_timestamp(frame)
+        video_writer.write(frame)
+    video_writer.release()
+    print(f"Recording ended: {filename}")
+
 recording = False
 recording_end_time = 0
 detection_flag = False
@@ -141,24 +153,15 @@ while True:
         microcontroller_on_detection()
         detection_flag = True  # Set the flag to indicate detection
 
-    if recording:
-        frame_bgr = add_timestamp(frame_bgr)  # Add timestamp to frame
-        video_writer.write(frame_bgr)
-        if time.time() > recording_end_time:
-            print(f"Recording ended at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-            recording = False
-            video_writer.release()
-            microcontroller_on_recording_end()
-            detection_flag = False  # Reset the flag after recording ends
-    
     if not recording and detection_flag:
         print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         recording = True
-        recording_end_time = time.time() + recording_duration
+        detection_flag = False
         filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".avi")
-        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
+        recording_thread = threading.Thread(target=record_video, args=(filename, recording_duration, vid_fps, video_resolution, picam2))
+        recording_thread.start()
         microcontroller_on_recording_start()
-
+    
     # Uncomment the line below to show the preview window
     # if args.preview:
     #     cv2.imshow("Object Detection", frame_bgr)
