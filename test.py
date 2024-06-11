@@ -88,7 +88,7 @@ autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when t
 autofocus_thread.start()
 
 def detect_objects(frame):
-    input_data = cv2.resize(frame, model_input_size)  # Resize to model input size
+    input_data = cv2.resize(frame, model_input_size, interpolation=cv2.INTER_NEAREST)  # Use faster interpolation
     input_data = np.expand_dims(input_data, axis=0)  # Add batch dimension
     input_data = np.uint8(input_data)  # Convert input data to uint8
     
@@ -146,11 +146,13 @@ frame_count = 0
 while True:
     frame = picam2.capture_array()
     frame_count += 1
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
-    boxes, classes, scores = detect_objects(frame_rgb)
-    frame, detection_made = draw_boxes(frame, boxes, classes, scores)
     
-    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
+    if not recording:
+        # Perform object detection on a downscaled frame to improve performance
+        small_frame = cv2.resize(frame, (video_width // 2, video_height // 2))
+        small_frame_rgb = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
+        boxes, classes, scores = detect_objects(small_frame_rgb)
+        frame, detection_made = draw_boxes(frame, boxes, classes, scores)
     
     if detection_made and not recording and not detection_flag:
         print(f"Detection made at {time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -158,8 +160,8 @@ while True:
         detection_flag = True  # Set the flag to indicate detection
 
     if recording:
-        frame_bgr = add_timestamp(frame_bgr)  # Add timestamp to frame
-        video_writer.write(frame_bgr)
+        frame = add_timestamp(frame)  # Add timestamp to frame
+        video_writer.write(frame)
         if time.time() > recording_end_time:
             print(f"Recording ended at {time.strftime('%Y-%m-%d %H:%M:%S')}")
             recording = False
@@ -167,15 +169,9 @@ while True:
             video_writer = None
             microcontroller_on_recording_end()
             detection_flag = False  # Reset the flag after recording ends
-        # Print the FPS 5 seconds
-        if time.time() - start_time >= 5:
-            actual_fps = frame_count / (time.time() - start_time)
-            print(f"Actual FPS: {actual_fps:.2f}")
-            start_time = time.time()
-            frame_count = 0
     
     if not recording and detection_flag:
-        print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')} at FPS " + str(vid_fps))
+        print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         recording = True
         detection_flag = False
         recording_end_time = time.time() + recording_duration
@@ -183,10 +179,17 @@ while True:
         video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, (video_width, video_height))
         microcontroller_on_recording_start()
 
+    # Print the FPS every 5 seconds
+    if time.time() - start_time >= 5:
+        actual_fps = frame_count / (time.time() - start_time)
+        print(f"Actual FPS: {actual_fps:.2f}")
+        start_time = time.time()
+        frame_count = 0
+
     # Uncomment the line below to show the preview window
     # if args.preview:
-    #     cv2.imshow("Object Detection", frame_bgr)
-    
+    #     cv2.imshow("Object Detection", frame)
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -194,4 +197,4 @@ if video_writer is not None:
     video_writer.release()
 
 picam2.stop()
-cv2.destroyAllWindows()
+cv2.destroyAll
