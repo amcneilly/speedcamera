@@ -67,9 +67,11 @@ with open(labels_path, 'r') as f:
 # interpreter = Interpreter(model_path=model_path)
 # interpreter.allocate_tensors()
 # Load TensorFlow Lite model with GPU delegate
-interpreter = Interpreter(model_path=model_path, experimental_delegates=[load_delegate('libedgetpu.so.1')])
+interpreter = Interpreter(
+    model_path=model_path, 
+    experimental_delegates=[load_delegate('libdelegate.so', {"device": "GPU"})]
+)
 interpreter.allocate_tensors()
-
 
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
