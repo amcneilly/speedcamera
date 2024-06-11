@@ -126,20 +126,10 @@ def microcontroller_on_recording_start():
 def microcontroller_on_recording_end():
     print("Microcontroller: Recording ended")
 
-def record_video(filename, recording_duration, vid_fps, video_resolution, picam2):
-    print(f"Recording started: {filename}")
-    video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, video_resolution)
-    start_time = time.time()
-    while time.time() - start_time < recording_duration:
-        frame = picam2.capture_array()
-        frame = add_timestamp(frame)
-        video_writer.write(frame)
-    video_writer.release()
-    print(f"Recording ended: {filename}")
-
 recording = False
 recording_end_time = 0
 detection_flag = False
+video_writer = None
 
 while True:
     frame = picam2.capture_array()
@@ -153,21 +143,33 @@ while True:
         microcontroller_on_detection()
         detection_flag = True  # Set the flag to indicate detection
 
+    if recording:
+        frame_bgr = add_timestamp(frame_bgr)  # Add timestamp to frame
+        video_writer.write(frame_bgr)
+        if time.time() > recording_end_time:
+            print(f"Recording ended at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+            recording = False
+            video_writer.release()
+            microcontroller_on_recording_end()
+            detection_flag = False  # Reset the flag after recording ends
+    
     if not recording and detection_flag:
         print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         recording = True
-        detection_flag = False
+        recording_end_time = time.time() + recording_duration
         filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
-        recording_thread = threading.Thread(target=record_video, args=(filename, recording_duration, vid_fps, video_resolution, picam2))
-        recording_thread.start()
+        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, video_resolution)
         microcontroller_on_recording_start()
-    
+
     # Uncomment the line below to show the preview window
     # if args.preview:
     #     cv2.imshow("Object Detection", frame_bgr)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+if video_writer is not None:
+    video_writer.release()
 
 picam2.stop()
 cv2.destroyAllWindows()
