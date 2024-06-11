@@ -30,7 +30,7 @@ parser.add_argument('--aftrigger', type=int, default=0, help='Auto Focus Trigger
 parser.add_argument('--exposure', type=int, help='Set camera exposure time')
 parser.add_argument('--interval', type=int, default=30, help='Interval for periodic autofocus in seconds')
 parser.add_argument('--fps', type=int, default=30, help='Frames per second for video recording')
-parser.add_argument('--cooldown', type=int, default=10, help='Cooldown period after recording in seconds')
+parser.add_argument('--cooldown', type=int, default=2, help='Cooldown period after recording in seconds')
 
 args = parser.parse_args()
 
