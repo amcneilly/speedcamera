@@ -132,19 +132,30 @@ detection_flag = False
 video_writer = None
 
 while True:
-    frame = picam2.capture_array()
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
-    boxes, classes, scores = detect_objects(frame_rgb)
-    frame, detection_made = draw_boxes(frame, boxes, classes, scores)
-    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
+    if not recording:
+        frame = picam2.capture_array()
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
+        boxes, classes, scores = detect_objects(frame_rgb)
+        frame, detection_made = draw_boxes(frame, boxes, classes, scores)
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
     
-    if detection_made and not recording and not detection_flag:
-        print(f"Detection made at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-        microcontroller_on_detection()
-        detection_flag = True  # Set the flag to indicate detection
+        if detection_made and not recording and not detection_flag:
+            print(f"Detection made at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+            microcontroller_on_detection()
+            detection_flag = True  # Set the flag to indicate detection
+
+        if not recording and detection_flag:
+            print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+            recording = True
+            detection_flag = False
+            recording_end_time = time.time() + recording_duration
+            filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
+            video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, video_resolution)
+            microcontroller_on_recording_start()
 
     if recording:
-        frame_bgr = add_timestamp(frame_bgr)  # Add timestamp to frame
+        frame = picam2.capture_array()
+        frame_bgr = add_timestamp(frame)  # Add timestamp to frame
         video_writer.write(frame_bgr)
         if time.time() > recording_end_time:
             print(f"Recording ended at {time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -153,14 +164,6 @@ while True:
             microcontroller_on_recording_end()
             detection_flag = False  # Reset the flag after recording ends
     
-    if not recording and detection_flag:
-        print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-        recording = True
-        recording_end_time = time.time() + recording_duration
-        filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
-        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, video_resolution)
-        microcontroller_on_recording_start()
-
     # Uncomment the line below to show the preview window
     # if args.preview:
     #     cv2.imshow("Object Detection", frame_bgr)
