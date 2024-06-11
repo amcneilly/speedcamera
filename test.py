@@ -6,7 +6,7 @@ import argparse
 import threading
 from picamera2 import Picamera2, Preview
 from libcamera import controls
-from tflite_runtime.interpreter import Interpreter
+from tflite_runtime.interpreter import Interpreter, load_delegate
 
 def periodic_autofocus(picam2, AFMode=1, aftrigger=0, interval=30):
     print("Periodic autofocus started with interval =", interval)
@@ -64,8 +64,12 @@ with open(labels_path, 'r') as f:
     labels = {i: line.strip() for i, line in enumerate(f.readlines())}
 
 # Load TensorFlow Lite model
-interpreter = Interpreter(model_path=model_path)
+# interpreter = Interpreter(model_path=model_path)
+# interpreter.allocate_tensors()
+# Load TensorFlow Lite model with GPU delegate
+interpreter = Interpreter(model_path=model_path, experimental_delegates=[load_delegate('libedgetpu.so.1')])
 interpreter.allocate_tensors()
+
 
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
