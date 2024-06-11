@@ -128,7 +128,7 @@ def microcontroller_on_recording_end():
 
 def record_video(filename, recording_duration, vid_fps, video_resolution, picam2):
     print(f"Recording started: {filename}")
-    video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'mp4v'), vid_fps, video_resolution)
+    video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, video_resolution)
     start_time = time.time()
     while time.time() - start_time < recording_duration:
         frame = picam2.capture_array()
