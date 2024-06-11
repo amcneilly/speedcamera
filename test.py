@@ -146,12 +146,9 @@ frame_count = 0
 while True:
     frame = picam2.capture_array()
     frame_count += 1
-    
-    if not recording:
-        # Support detection that triggers recording
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
-        boxes, classes, scores = detect_objects(frame_rgb)
-        frame, detection_made = draw_boxes(frame, boxes, classes, scores)
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
+    boxes, classes, scores = detect_objects(frame_rgb)
+    frame, detection_made = draw_boxes(frame, boxes, classes, scores)
     
     frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert frame back to BGR for display
     
@@ -170,22 +167,21 @@ while True:
             video_writer = None
             microcontroller_on_recording_end()
             detection_flag = False  # Reset the flag after recording ends
+        # Print the FPS 5 seconds
+        if time.time() - start_time >= 5:
+            actual_fps = frame_count / (time.time() - start_time)
+            print(f"Actual FPS: {actual_fps:.2f}")
+            start_time = time.time()
+            frame_count = 0
     
     if not recording and detection_flag:
-        print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')} at FPS " + str(vid_fps))
         recording = True
         detection_flag = False
         recording_end_time = time.time() + recording_duration
         filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
         video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, (video_width, video_height))
         microcontroller_on_recording_start()
-
-    # Print the FPS 5 seconds
-    if time.time() - start_time >= 5:
-        actual_fps = frame_count / (time.time() - start_time)
-        print(f"Actual FPS: {actual_fps:.2f}")
-        start_time = time.time()
-        frame_count = 0
 
     # Uncomment the line below to show the preview window
     # if args.preview:
