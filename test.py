@@ -8,30 +8,30 @@ from picamera2 import Picamera2, Preview
 from libcamera import controls
 from tflite_runtime.interpreter import Interpreter
 
-def periodic_autofocus(picam2, interval=30):
-    print("adjust exposure")
+def periodic_autofocus(picam2, AFMode=1, aftrigger=0, interval=30):
+    print("Periodic autofocus started")
     while True:
-        picam2.set_controls({"AfMode": 1 ,"AfTrigger": 0})
+        picam2.set_controls({"AfMode": AFMode, "AfTrigger": aftrigger})
         time.sleep(interval)
 
 def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
-    
+
 def adjust_exposure(picam2, brightness_threshold=1, day_exposure=100000, night_exposure=2000000):
-    print("adjust exposure")
+    print("Adjusting exposure")
     while True:
         frame = picam2.capture_array()
         brightness = calculate_brightness(frame)
         if brightness < brightness_threshold:
             # It's night time
-            print("Nightime expsoure")
+            print("Nighttime exposure")
             picam2.set_controls({"ExposureTime": night_exposure})  # Adjust as necessary for night exposure
         else:
             # It's day time
-            print("Nightime expsoure")
+            print("Daytime exposure")
             picam2.set_controls({"ExposureTime": day_exposure})  # Adjust as necessary for day exposure
-        time.sleep(300)  # Adjust exposure every 5 seconds
+        time.sleep(300)  # Adjust exposure every 5 minutes
 
 # Argument parser setup
 parser = argparse.ArgumentParser(description='Object detection and recording script.')
@@ -39,6 +39,9 @@ parser.add_argument('--desired_object', type=str, default='car', help='Object to
 parser.add_argument('--recording_duration', type=int, default=15, help='Recording duration in seconds')
 parser.add_argument('--video_resolution', type=str, default='1024x760', help='Desired video resolution (widthxheight)')
 parser.add_argument('--output_folder', type=str, default='recordings', help='Folder to save videos')
+parser.add_argument('--preview', action='store_true', help='Show preview')
+parser.add_argument('--AFMode', type=int, default=1, help='Auto Focus Mode')
+parser.add_argument('--aftrigger', type=int, default=0, help='Auto Focus Trigger')
 
 args = parser.parse_args()
 
@@ -69,27 +72,17 @@ output_details = interpreter.get_output_details()
 
 # Initialize camera
 picam2 = Picamera2()
-picam2.start_preview(Preview.QTGL)
+if args.preview:
+    picam2.start_preview(Preview.QTGL)
 print("video_resolution = " + str(video_resolution))
 config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
 picam2.start()
 
-# Start the exposure adjustment thread
-# exposure_thread = threading.Thread(target=adjust_exposure, args=(picam2,))
-# exposure_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
-# exposure_thread.start()
-
 # Start the periodic autofocus thread
-autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2,))
+autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2, args.AFMode, args.aftrigger))
 autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
 autofocus_thread.start()
-# time.sleep(1)
-# picam2.set_controls({"AfMode": 2 ,"AfTrigger": 0})
-# time.sleep(5)
-
-# Apply zoom
-#picam2.set_controls({"Zoom": zoom_value})
 
 def detect_objects(frame):
     input_data = cv2.resize(frame, model_input_size)  # Resize to model input size
@@ -174,7 +167,9 @@ while True:
         video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'XVID'), vid_fps, video_resolution)
         microcontroller_on_recording_start()
 
-    #cv2.imshow("Object Detection", frame_bgr)
+    # Uncomment the line below to show the preview window
+    # if args.preview:
+    #     cv2.imshow("Object Detection", frame_bgr)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
