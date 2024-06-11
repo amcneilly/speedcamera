@@ -9,7 +9,7 @@ from libcamera import controls
 from tflite_runtime.interpreter import Interpreter
 
 def periodic_autofocus(picam2, AFMode=1, aftrigger=0, interval=30):
-    print("Periodic autofocus started")
+    print("Periodic autofocus started with interval =", interval)
     while True:
         picam2.set_controls({"AfMode": AFMode, "AfTrigger": aftrigger})
         time.sleep(interval)
@@ -17,21 +17,6 @@ def periodic_autofocus(picam2, AFMode=1, aftrigger=0, interval=30):
 def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
-
-def adjust_exposure(picam2, brightness_threshold=1, day_exposure=100000, night_exposure=2000000):
-    print("Adjusting exposure")
-    while True:
-        frame = picam2.capture_array()
-        brightness = calculate_brightness(frame)
-        if brightness < brightness_threshold:
-            # It's night time
-            print("Nighttime exposure")
-            picam2.set_controls({"ExposureTime": night_exposure})  # Adjust as necessary for night exposure
-        else:
-            # It's day time
-            print("Daytime exposure")
-            picam2.set_controls({"ExposureTime": day_exposure})  # Adjust as necessary for day exposure
-        time.sleep(300)  # Adjust exposure every 5 minutes
 
 # Argument parser setup
 parser = argparse.ArgumentParser(description='Object detection and recording script.')
@@ -42,6 +27,8 @@ parser.add_argument('--output_folder', type=str, default='recordings', help='Fol
 parser.add_argument('--preview', action='store_true', help='Show preview')
 parser.add_argument('--AFMode', type=int, default=1, help='Auto Focus Mode')
 parser.add_argument('--aftrigger', type=int, default=0, help='Auto Focus Trigger')
+parser.add_argument('--exposure', type=int, help='Set camera exposure time')
+parser.add_argument('--interval', type=int, default=30, help='Interval for periodic autofocus in seconds')
 
 args = parser.parse_args()
 
@@ -79,8 +66,13 @@ config = picam2.create_preview_configuration(main={"size": video_resolution})
 picam2.configure(config)
 picam2.start()
 
+# Set exposure time if provided
+if args.exposure:
+    print(f"Setting exposure to {args.exposure}")
+    picam2.set_controls({"ExposureTime": args.exposure})
+
 # Start the periodic autofocus thread
-autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2, args.AFMode, args.aftrigger))
+autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2, args.AFMode, args.aftrigger, args.interval))
 autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
 autofocus_thread.start()
 
