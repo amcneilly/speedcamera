@@ -29,18 +29,28 @@ parser.add_argument('--AFMode', type=int, default=1, help='Auto Focus Mode')
 parser.add_argument('--aftrigger', type=int, default=0, help='Auto Focus Trigger')
 parser.add_argument('--exposure', type=int, help='Set camera exposure time')
 parser.add_argument('--interval', type=int, default=30, help='Interval for periodic autofocus in seconds')
-parser.add_argument('--fps', type=int, default=20, help='Frames per second for video recording')
+parser.add_argument('--fps', type=int, default=30, help='Frames per second for video recording')
 
 args = parser.parse_args()
+
+# Define max FPS for different resolutions
+resolution_fps = {
+    '9152×6944': 2,
+    '4624×3472': 7,
+    '3840×2160': 14,
+    '2312×1736': 26,
+    '1920×1080': 45,
+}
 
 # Configuration
 model_path = "ssd_mobilenet_v1_coco_quant_postprocess.tflite"  # Update with your model path
 labels_path = "coco_labels.txt"  # Update with your labels file path
 desired_object = args.desired_object  # Object to detect
 recording_duration = args.recording_duration  # Recording duration in seconds
-video_resolution = tuple(map(int, args.video_resolution.split('x')))  # Desired video resolution (width, height)
+video_resolution = args.video_resolution  # Desired video resolution (widthxheight)
+video_width, video_height = tuple(map(int, video_resolution.split('x')))
 model_input_size = (300, 300)  # Model input size (width, height)
-vid_fps = args.fps  # Video frames per second
+vid_fps = min(args.fps, resolution_fps.get(video_resolution, 20))  # Get FPS based on resolution
 zoom_value = 1.0  # Zoom value
 output_folder = args.output_folder  # Folder to save videos
 
@@ -63,7 +73,7 @@ picam2 = Picamera2()
 if args.preview:
     picam2.start_preview(Preview.QTGL)
 print("video_resolution = " + str(video_resolution))
-config = picam2.create_preview_configuration(main={"size": video_resolution})
+config = picam2.create_preview_configuration(main={"size": (video_width, video_height), "format": "RGB888"})
 picam2.configure(config)
 picam2.start()
 
@@ -130,12 +140,15 @@ recording = False
 recording_end_time = 0
 detection_flag = False
 video_writer = None
+start_time = time.time()
+frame_count = 0
 
 while True:
     frame = picam2.capture_array()
+    frame_count += 1
     
     if not recording:
-        #support detection. that triggers recording
+        # Support detection that triggers recording
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
         boxes, classes, scores = detect_objects(frame_rgb)
         frame, detection_made = draw_boxes(frame, boxes, classes, scores)
@@ -164,8 +177,15 @@ while True:
         detection_flag = False
         recording_end_time = time.time() + recording_duration
         filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
-        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, video_resolution)
+        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, (video_width, video_height))
         microcontroller_on_recording_start()
+
+    # Print the FPS every second
+    if time.time() - start_time >= 1:
+        actual_fps = frame_count / (time.time() - start_time)
+        print(f"Actual FPS: {actual_fps:.2f}")
+        start_time = time.time()
+        frame_count = 0
 
     # Uncomment the line below to show the preview window
     # if args.preview:
