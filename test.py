@@ -30,6 +30,7 @@ parser.add_argument('--aftrigger', type=int, default=0, help='Auto Focus Trigger
 parser.add_argument('--exposure', type=int, help='Set camera exposure time')
 parser.add_argument('--interval', type=int, default=30, help='Interval for periodic autofocus in seconds')
 parser.add_argument('--fps', type=int, default=30, help='Frames per second for video recording')
+parser.add_argument('--cooldown', type=int, default=10, help='Cooldown period after recording in seconds')
 
 args = parser.parse_args()
 
@@ -53,6 +54,7 @@ model_input_size = (300, 300)  # Model input size (width, height)
 vid_fps = min(args.fps, resolution_fps.get(video_resolution, 20))  # Get FPS based on resolution
 zoom_value = 1.0  # Zoom value
 output_folder = args.output_folder  # Folder to save videos
+cooldown_period = args.cooldown  # Cooldown period after recording
 
 # Create output folder if it doesn't exist
 os.makedirs(output_folder, exist_ok=True)
@@ -138,7 +140,7 @@ def microcontroller_on_recording_end():
 
 recording = False
 recording_end_time = 0
-detection_flag = False
+cooldown_end_time = 0
 video_writer = None
 start_time = time.time()
 frame_count = 0
@@ -147,18 +149,25 @@ while True:
     frame = picam2.capture_array()
     frame_count += 1
     
-    if not recording:
-        # Perform object detection on a downscaled frame to improve performance
-        small_frame = cv2.resize(frame, (video_width // 2, video_height // 2))
-        small_frame_rgb = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
-        boxes, classes, scores = detect_objects(small_frame_rgb)
-        frame, detection_made = draw_boxes(frame, boxes, classes, scores)
+    if time.time() > cooldown_end_time:  # Only process detection if not in cooldown
+        if not recording:
+            # Perform object detection on a downscaled frame to improve performance
+            small_frame = cv2.resize(frame, (video_width // 2, video_height // 2))
+            small_frame_rgb = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for detection
+            boxes, classes, scores = detect_objects(small_frame_rgb)
+            frame, detection_made = draw_boxes(frame, boxes, classes, scores)
+        else:
+            detection_made = False
     
-    if detection_made and not recording and not detection_flag:
-        print(f"Detection made at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-        microcontroller_on_detection()
-        detection_flag = True  # Set the flag to indicate detection
-
+        if detection_made and not recording:
+            print(f"Detection made at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+            microcontroller_on_detection()
+            recording = True
+            recording_end_time = time.time() + recording_duration
+            filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
+            video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, (video_width, video_height))
+            microcontroller_on_recording_start()
+    
     if recording:
         frame = add_timestamp(frame)  # Add timestamp to frame
         video_writer.write(frame)
@@ -168,16 +177,7 @@ while True:
             video_writer.release()
             video_writer = None
             microcontroller_on_recording_end()
-            detection_flag = False  # Reset the flag after recording ends
-    
-    if not recording and detection_flag:
-        print(f"Recording started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-        recording = True
-        detection_flag = False
-        recording_end_time = time.time() + recording_duration
-        filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
-        video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, (video_width, video_height))
-        microcontroller_on_recording_start()
+            cooldown_end_time = time.time() + cooldown_period  # Set cooldown period after recording ends
 
     # Print the FPS every 5 seconds
     if time.time() - start_time >= 5:
@@ -197,4 +197,4 @@ if video_writer is not None:
     video_writer.release()
 
 picam2.stop()
-cv2.destroyAll
+cv2.destroyAllWindows()
