@@ -178,13 +178,12 @@ while True:
             video_writer = None
             microcontroller_on_recording_end()
             cooldown_end_time = time.time() + cooldown_period  # Set cooldown period after recording ends
-
-    # Print the FPS every 5 seconds
-    if time.time() - start_time >= 5:
-        actual_fps = frame_count / (time.time() - start_time)
-        print(f"Actual FPS: {actual_fps:.2f}")
-        start_time = time.time()
-        frame_count = 0
+        # Print the FPS every 5 seconds
+        if time.time() - start_time >= 5:
+            actual_fps = frame_count / (time.time() - start_time)
+            print(f"Actual FPS: {actual_fps:.2f}")
+            start_time = time.time()
+            frame_count = 0
 
     # Uncomment the line below to show the preview window
     # if args.preview:
