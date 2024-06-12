@@ -104,6 +104,11 @@ def detect_objects(frame):
     return boxes, classes, scores
 
 def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
+    if len(frame.shape) == 2:  # If the frame is grayscale, convert it to BGR
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    elif len(frame.shape) == 3 and frame.shape[2] == 1:  # If the frame has a single channel, convert it to BGR
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    
     height, width, _ = frame.shape
     detection_made = False
     for i in range(len(boxes)):
@@ -123,6 +128,7 @@ def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
                 cv2.putText(frame, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
     
     return frame, detection_made
+
 
 def add_timestamp(frame):
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -147,6 +153,13 @@ frame_count = 0
 
 while True:
     frame = picam2.capture_array()
+    
+    # Ensure the frame is in BGR format
+    if len(frame.shape) == 2:  # If the frame is grayscale, convert it to BGR
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    elif len(frame.shape) == 3 and frame.shape[2] == 1:  # If the frame has a single channel, convert it to BGR
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
     frame_count += 1
     
     if time.time() > cooldown_end_time:  # Only process detection if not in cooldown
@@ -197,3 +210,4 @@ if video_writer is not None:
 
 picam2.stop()
 cv2.destroyAllWindows()
+
