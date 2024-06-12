@@ -153,6 +153,9 @@ frame_count = 0
 while True:
     frame = picam2.capture_array()
     frame_count += 1
+
+    # Debugging: Print frame size and type
+    print(f"Captured frame {frame_count}: shape={frame.shape}, dtype={frame.dtype}")
     
     # Ensure frame is in BGR format
     if len(frame.shape) == 2:  # If the frame is grayscale, convert it to BGR
@@ -176,16 +179,19 @@ while True:
             recording = True
             recording_end_time = time.time() + recording_duration
             filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
-            video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, (video_width, video_height))
+            video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'mp4v'), vid_fps, (video_width, video_height))
+            print(f"Initialized VideoWriter with filename={filename}, fourcc=mp4v, fps={vid_fps}, resolution=({video_width}, {video_height})")
             microcontroller_on_recording_start()
     
     if recording:
         frame = add_timestamp(frame)  # Add timestamp to frame
         video_writer.write(frame)
+        print(f"Writing frame {frame_count} to video file.")
         if time.time() > recording_end_time:
             print(f"Recording ended at {time.strftime('%Y-%m-%d %H:%M:%S')}")
             recording = False
             video_writer.release()
+            print("Released VideoWriter.")
             video_writer = None
             microcontroller_on_recording_end()
             cooldown_end_time = time.time() + cooldown_period  # Set cooldown period after recording ends
