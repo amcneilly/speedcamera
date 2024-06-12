@@ -215,9 +215,9 @@ while True:
             start_time = time.time()
             frame_count = 0
 
-    # Uncomment the line below to show the preview window
-    # if args.preview:
-    #     cv2.imshow("Object Detection", frame)
+    # Show the preview window with the rotated frame
+    if args.preview:
+        cv2.imshow("Object Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
