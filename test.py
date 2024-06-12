@@ -55,21 +55,22 @@ autofocus_thread = threading.Thread(target=periodic_autofocus, args=(picam2, arg
 autofocus_thread.daemon = True  # Daemonize the thread to ensure it exits when the main program does
 autofocus_thread.start()
 
-recording = False
-recording_end_time = 0
-video_writer = None
-frame_count = 0
-
-# Start recording immediately for the duration specified
 recording = True
 recording_end_time = time.time() + args.recording_duration
 filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
 video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'mp4v'), vid_fps, (video_width, video_height))
 print(f"Initialized VideoWriter with filename={filename}, fourcc=mp4v, fps={vid_fps}, resolution=({video_width}, {video_height})")
 
+frame_count = 0
+
 while recording:
     frame = picam2.capture_array()
     frame_count += 1
+
+    # Save the first few frames to verify capture
+    if frame_count <= 5:
+        cv2.imwrite(f"{output_folder}/frame_{frame_count}.png", frame)
+        print(f"Saved frame_{frame_count}.png for verification.")
 
     # Ensure frame is in BGR format
     if len(frame.shape) == 2:  # If the frame is grayscale, convert it to BGR
