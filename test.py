@@ -18,20 +18,6 @@ def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
 
-def rotate_image(frame, angle):
-    if angle == 90:
-        return cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-    elif angle == 180:
-        return cv2.rotate(frame, cv2.ROTATE_180)
-    elif angle == 270:
-        return cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    else:
-        # For arbitrary angles, use the affine transformation
-        (h, w) = frame.shape[:2]
-        center = (w // 2, h // 2)
-        M = cv2.getRotationMatrix2D(center, angle, 1.0)
-        return cv2.warpAffine(frame, M, (w, h))
-
 # Argument parser setup
 parser = argparse.ArgumentParser(description='Object detection and recording script.')
 parser.add_argument('--desired_object', type=str, default='car', help='Object to detect')
@@ -45,7 +31,6 @@ parser.add_argument('--exposure', type=int, help='Set camera exposure time')
 parser.add_argument('--interval', type=int, default=30, help='Interval for periodic autofocus in seconds')
 parser.add_argument('--fps', type=int, default=30, help='Frames per second for video recording')
 parser.add_argument('--cooldown', type=int, default=2, help='Cooldown period after recording in seconds')
-parser.add_argument('--rotation', type=int, default=0, help='Rotation angle for the camera image (0, 90, 180, 270)')
 
 args = parser.parse_args()
 
@@ -87,7 +72,8 @@ output_details = interpreter.get_output_details()
 
 # Initialize camera
 picam2 = Picamera2()
-picam2.start_preview(Preview.QTGL)
+if args.preview:
+    picam2.start_preview(Preview.QTGL)
 print("video_resolution = " + str(video_resolution))
 config = picam2.create_preview_configuration(main={"size": (video_width, video_height), "format": "YUV420"})
 picam2.configure(config)
@@ -174,10 +160,6 @@ while True:
     elif len(frame.shape) == 3 and frame.shape[2] == 1:  # If frame has only one channel, convert to BGR
         frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
     
-    # Rotate the frame if needed
-    if args.rotation != 0:
-        frame = rotate_image(frame, args.rotation)
-    
     if time.time() > cooldown_end_time:  # Only process detection if not in cooldown
         if not recording:
             # Perform object detection on a downscaled frame to improve performance
@@ -214,9 +196,9 @@ while True:
             start_time = time.time()
             frame_count = 0
 
-    # Show the preview window with the rotated frame
-    if args.preview:
-        cv2.imshow("Object Detection", frame)
+    # Uncomment the line below to show the preview window
+    # if args.preview:
+    #     cv2.imshow("Object Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
