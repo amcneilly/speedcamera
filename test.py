@@ -74,6 +74,7 @@ output_details = interpreter.get_output_details()
 picam2 = Picamera2()
 if args.preview:
     picam2.start_preview(Preview.QTGL)
+    
 print("video_resolution = " + str(video_resolution))
 # Configure preview with YUV420 and recording with RGB888
 preview_config = picam2.create_preview_configuration(main={"size": (video_width, video_height), "format": "YUV420"})
@@ -190,8 +191,8 @@ while True:
             start_time = time.time()
             frame_count = 0
 
-    if args.preview:
-        cv2.imshow("Object Detection", frame)
+    #if args.preview:
+    #    cv2.imshow("Object Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
