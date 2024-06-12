@@ -18,6 +18,20 @@ def calculate_brightness(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return np.mean(gray)
 
+def rotate_image(frame, angle):
+    if angle == 90:
+        return cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+    elif angle == 180:
+        return cv2.rotate(frame, cv2.ROTATE_180)
+    elif angle == 270:
+        return cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    else:
+        # For arbitrary angles, use the affine transformation
+        (h, w) = frame.shape[:2]
+        center = (w // 2, h // 2)
+        M = cv2.getRotationMatrix2D(center, angle, 1.0)
+        return cv2.warpAffine(frame, M, (w, h))
+
 # Argument parser setup
 parser = argparse.ArgumentParser(description='Object detection and recording script.')
 parser.add_argument('--desired_object', type=str, default='car', help='Object to detect')
@@ -31,6 +45,7 @@ parser.add_argument('--exposure', type=int, help='Set camera exposure time')
 parser.add_argument('--interval', type=int, default=30, help='Interval for periodic autofocus in seconds')
 parser.add_argument('--fps', type=int, default=30, help='Frames per second for video recording')
 parser.add_argument('--cooldown', type=int, default=2, help='Cooldown period after recording in seconds')
+parser.add_argument('--rotation', type=int, default=0, help='Rotation angle for the camera image (0, 90, 180, 270)')
 
 args = parser.parse_args()
 
@@ -159,6 +174,10 @@ while True:
         frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
     elif len(frame.shape) == 3 and frame.shape[2] == 1:  # If frame has only one channel, convert to BGR
         frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    
+    # Rotate the frame if needed
+    if args.rotation != 0:
+        frame = rotate_image(frame, args.rotation)
     
     if time.time() > cooldown_end_time:  # Only process detection if not in cooldown
         if not recording:
