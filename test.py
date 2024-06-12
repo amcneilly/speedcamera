@@ -75,8 +75,10 @@ picam2 = Picamera2()
 if args.preview:
     picam2.start_preview(Preview.QTGL)
 print("video_resolution = " + str(video_resolution))
-config = picam2.create_preview_configuration(main={"size": (video_width, video_height), "format": "YUV420"})
-picam2.configure(config)
+# Configure preview with YUV420 and recording with RGB888
+preview_config = picam2.create_preview_configuration(main={"size": (video_width, video_height), "format": "YUV420"})
+recording_config = picam2.create_still_configuration(main={"size": (video_width, video_height), "format": "RGB888"})
+picam2.configure(preview_config)
 picam2.start()
 
 # Set exposure time if provided
@@ -104,11 +106,6 @@ def detect_objects(frame):
     return boxes, classes, scores
 
 def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
-    if len(frame.shape) == 2:  # If the frame is grayscale, convert it to BGR
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-    elif len(frame.shape) == 3 and frame.shape[2] == 1:  # If the frame has a single channel, convert it to BGR
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-    
     height, width, _ = frame.shape
     detection_made = False
     for i in range(len(boxes)):
@@ -128,7 +125,6 @@ def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
                 cv2.putText(frame, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
     
     return frame, detection_made
-
 
 def add_timestamp(frame):
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -154,12 +150,8 @@ frame_count = 0
 while True:
     frame = picam2.capture_array()
     
-    # Ensure the frame is in BGR format
-    if len(frame.shape) == 2:  # If the frame is grayscale, convert it to BGR
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-    elif len(frame.shape) == 3 and frame.shape[2] == 1:  # If the frame has a single channel, convert it to BGR
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-
+    # Convert frame to BGR format for OpenCV
+    frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_I420)
     frame_count += 1
     
     if time.time() > cooldown_end_time:  # Only process detection if not in cooldown
@@ -178,7 +170,7 @@ while True:
             recording = True
             recording_end_time = time.time() + recording_duration
             filename = os.path.join(output_folder, time.strftime("%Y%m%d_%H%M%S") + ".mp4")
-            video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'avc1'), vid_fps, (video_width, video_height))
+            video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'mp4v'), vid_fps, (video_width, video_height))
             microcontroller_on_recording_start()
     
     if recording:
@@ -198,9 +190,8 @@ while True:
             start_time = time.time()
             frame_count = 0
 
-    # Uncomment the line below to show the preview window
-    # if args.preview:
-    #     cv2.imshow("Object Detection", frame)
+    if args.preview:
+        cv2.imshow("Object Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -210,4 +201,3 @@ if video_writer is not None:
 
 picam2.stop()
 cv2.destroyAllWindows()
-
