@@ -104,6 +104,11 @@ def detect_objects(frame):
     return boxes, classes, scores
 
 def draw_boxes(frame, boxes, classes, scores, threshold=0.5):
+    if len(frame.shape) == 2:  # If the frame is grayscale, convert it to BGR
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    elif len(frame.shape) == 3 and frame.shape[2] == 1:  # If frame has only one channel, convert to BGR
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    
     height, width, _ = frame.shape
     detection_made = False
     for i in range(len(boxes)):
@@ -148,6 +153,12 @@ frame_count = 0
 while True:
     frame = picam2.capture_array()
     frame_count += 1
+    
+    # Ensure frame is in BGR format
+    if len(frame.shape) == 2:  # If the frame is grayscale, convert it to BGR
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    elif len(frame.shape) == 3 and frame.shape[2] == 1:  # If frame has only one channel, convert to BGR
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
     
     if time.time() > cooldown_end_time:  # Only process detection if not in cooldown
         if not recording:
